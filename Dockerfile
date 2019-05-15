@@ -7,5 +7,6 @@ RUN GOOS=linux GOARCH=amd64 GO111MODULE=on go test -coverprofile=coverage.out -v
 RUN GOOS=linux GOARCH=amd64 GO111MODULE=on go build -tags static_all -o $GOPATH/bin/dcos-terraform-statuspage -v main.go
 
 FROM alpine:3.9
+RUN apk add ca-certificates
 COPY --from=builder /go/bin/dcos-terraform-statuspage /
 CMD ["dcos-terraform-statuspage"]
