@@ -48,7 +48,7 @@ type JSONData struct {
 func main() {
 	ParseArgs(&Options)
 
-	glog.Infof("Start server on 127.0.0.1:%d", Options.Listen)
+	glog.Infof("Start server on :%d", Options.Listen)
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
 	r.HandleFunc("/health", livenessHandler)
@@ -56,7 +56,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         fmt.Sprintf("127.0.0.1:%d", Options.Listen),
+		Addr:         fmt.Sprintf(":%d", Options.Listen),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  60 * time.Second,
