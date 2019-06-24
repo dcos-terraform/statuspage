@@ -20,6 +20,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/google/go-github/v26/github"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jessevdk/go-flags"
 	"golang.org/x/oauth2"
@@ -39,6 +40,14 @@ var Options struct {
 const (
 	STATIC_DIR      = "/static/"
 	STATIC_CSS_FILE = "bootstrap.min.css"
+	GENERATOR       = `  <meta name="GENERATOR" content="dcos-terraform-statuspage`
+	HEAD_EXTRA      = `  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+<meta name="msapplication-TileColor" content="#da532c">
+<meta name="theme-color" content="#ffffff">`
 )
 
 type Badge struct {
@@ -67,11 +76,22 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
 	r.HandleFunc("/health", livenessHandler)
-	r.PathPrefix(STATIC_DIR).Handler(http.StripPrefix(STATIC_DIR, http.FileServer(http.Dir("."+STATIC_DIR))))
+	r.HandleFunc("/favicon.ico", faviconHandler)
+	// r.HandleFunc("/android-chrome-192x192.png", faviconHandler)
+	// r.HandleFunc("/android-chrome-256x256.png", faviconHandler)
+	// r.HandleFunc("/apple-touch-icon.png", faviconHandler)
+	// r.HandleFunc("/favicon-32x32.png", faviconHandler)
+	// r.HandleFunc("/favicon-16x16.png", faviconHandler)
+	// r.HandleFunc("/mstile-150x150.png", faviconHandler)
+	// r.HandleFunc("/safari-pinned-tab.svg", faviconHandler)
+	// r.HandleFunc("/site.webmanifest", faviconHandler)
+	// r.HandleFunc("/browserconfig.xml", faviconHandler)
+	r.PathPrefix(STATIC_DIR).Handler(http.StripPrefix(STATIC_DIR, http.FileServer(http.Dir(STATIC_DIR))))
 	http.Handle("/", r)
 
+	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 	srv := &http.Server{
-		Handler:      r,
+		Handler:      handlers.ProxyHeaders(loggedRouter),
 		Addr:         fmt.Sprintf(":%d", Options.Listen),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -96,7 +116,7 @@ func main() {
 	}()
 
 	if glog.V(9) {
-		glog.Infof("Waiting for initial fetchRepositorys(\"%s\") and structure() to be done", Options.GitHubOrg)
+		glog.Infof("Waiting for initial fetchRepositorys(\"%s\") and markdownContent() to be done", Options.GitHubOrg)
 	}
 
 	<-done
@@ -269,9 +289,12 @@ func markdownContent() []byte {
 func renderMarkdownHtml() string {
 	flags := html.CommonFlags | html.CompletePage | html.HrefTargetBlank
 	opts := html.RendererOptions{
-		Title: "DC/OS Terraform modules",
-		Flags: flags,
-		CSS:   STATIC_DIR + "/css/" + STATIC_CSS_FILE,
+		Title:     "DC/OS Terraform modules",
+		Flags:     flags,
+		CSS:       STATIC_DIR + "css/" + STATIC_CSS_FILE,
+		Icon:      "/favicon.ico",
+		Head:      []byte(HEAD_EXTRA),
+		Generator: GENERATOR,
 	}
 	renderer := html.NewRenderer(opts)
 	return string(markdown.ToHTML(markdownCache, nil, renderer))
@@ -285,6 +308,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func livenessHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok"))
+}
+
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, STATIC_DIR+"images/favicon/favicon.ico")
 }
 
 // ParseArgs needs a struct compatible to jeddevdk/go-flags and will fill it
