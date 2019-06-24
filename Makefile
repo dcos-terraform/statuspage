@@ -17,4 +17,4 @@ clean:
 				$(GOCLEAN)
 				rm -f bin/dcos-terraform-statuspage
 docker-build:
-				docker build --pull -f Dockerfile -t dcos-terraform-statuspage:latest .
+				docker build --pull -f Dockerfile -t dcosterraform/statuspage:latest .
