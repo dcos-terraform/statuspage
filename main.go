@@ -19,7 +19,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
-	"github.com/google/go-github/v26/github"
+	"github.com/google/go-github/v27/github"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jessevdk/go-flags"
@@ -70,7 +70,7 @@ var ciStatus []CiResult
 func main() {
 	ParseArgs(&Options)
 	provider = append(provider, []string{"aws", "azurerm", "gcp", "null", "template"}...)
-	branches = append(branches, []string{"master", "support/0.2.x", "support/0.1.x"}...)
+	branches = append(branches, []string{"support/0.2.x", "support/0.1.x"}...)
 	repos = make(map[string][]*github.Repository, len(provider))
 
 	r := mux.NewRouter()
@@ -252,8 +252,8 @@ func markdownContent() []byte {
 	for _, p := range provider {
 		md = append(md, separator...)
 		providers := []byte("### Provider: **" + p + "**\n")
-		tablehead := []byte("| Repository | master | support/0.2.x | support/0.1.x |\n")
-		tablesplit := []byte("| --- | --- | --- | --- |\n")
+		tablehead := []byte("| Repository | support/0.2.x | support/0.1.x |\n")
+		tablesplit := []byte("| --- | --- | --- |\n")
 		md = append(md, providers...)
 		md = append(md, tablehead...)
 		md = append(md, tablesplit...)
